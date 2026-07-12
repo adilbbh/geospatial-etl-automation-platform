@@ -3,7 +3,6 @@ import os
 import psycopg2
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 
@@ -17,15 +16,12 @@ def get_connection():
     ]
 
     missing_variables = [
-        variable
-        for variable in required_variables
-        if not os.getenv(variable)
+        variable for variable in required_variables if not os.getenv(variable)
     ]
 
     if missing_variables:
         raise RuntimeError(
-            "Missing database environment variables: "
-            + ", ".join(missing_variables)
+            "Missing database environment variables: " + ", ".join(missing_variables)
         )
 
     return psycopg2.connect(

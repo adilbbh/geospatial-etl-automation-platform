@@ -30,7 +30,8 @@ def write_roads_to_postgis(
 
     cur.execute("TRUNCATE TABLE roads RESTART IDENTITY;")
 
-    insert_sql = """
+    insert_sqlr
+    = """
         INSERT INTO roads
         (road_id, road_name, road_type, source_file, geom)
         VALUES

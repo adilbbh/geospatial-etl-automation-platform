@@ -9,7 +9,6 @@ from threading import Lock
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-
 # ---------------------------------------------------------------------
 # Project paths
 # ---------------------------------------------------------------------
@@ -23,18 +22,13 @@ if str(PROJECT_DIR) not in sys.path:
 
 from api.services.job_status import update_job_status  # noqa: E402
 
-
 INCOMING_DIR = PROJECT_DIR / "incoming"
 ARCHIVE_DIR = PROJECT_DIR / "archive"
 FAILED_DIR = PROJECT_DIR / "failed"
 LOG_DIR = PROJECT_DIR / "logs"
 
 FME_EXE = Path(r"C:\Program Files\FME\fme.exe")
-FME_WORKSPACE = (
-    PROJECT_DIR
-    / "fme_workspaces"
-    / "roads_to_postgis.fmw"
-)
+FME_WORKSPACE = PROJECT_DIR / "fme_workspaces" / "roads_to_postgis.fmw"
 
 
 # ---------------------------------------------------------------------
@@ -53,6 +47,7 @@ EVENT_DEBOUNCE_SECONDS = 3
 # ---------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------
+
 
 def write_log(message: str) -> None:
     """Write a timestamped message to the terminal and watcher log."""
@@ -73,6 +68,7 @@ def write_log(message: str) -> None:
 # Directory and filename helpers
 # ---------------------------------------------------------------------
 
+
 def create_required_directories() -> None:
     """Create the required ETL folders if they do not exist."""
     for directory in (
@@ -91,9 +87,7 @@ def build_destination_path(
     """Create a timestamped archive or failed filename."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    return destination_dir / (
-        f"{source_file.stem}_{timestamp}{source_file.suffix}"
-    )
+    return destination_dir / (f"{source_file.stem}_{timestamp}{source_file.suffix}")
 
 
 def extract_job_id(input_file: Path) -> str | None:
@@ -123,6 +117,7 @@ def extract_original_filename(input_file: Path) -> str:
 # ---------------------------------------------------------------------
 # File readiness check
 # ---------------------------------------------------------------------
+
 
 def wait_until_file_is_ready(
     file_path: Path,
@@ -160,6 +155,7 @@ def wait_until_file_is_ready(
 # FME execution
 # ---------------------------------------------------------------------
 
+
 def run_fme(input_file: Path) -> bool:
     """Run the FME workspace for one GeoJSON input file."""
     command = [
@@ -190,15 +186,10 @@ def run_fme(input_file: Path) -> bool:
         print(result.stderr, flush=True)
 
     if result.returncode == 0:
-        write_log(
-            f"FME completed successfully: {input_file.name}"
-        )
+        write_log(f"FME completed successfully: {input_file.name}")
         return True
 
-    write_log(
-        f"FME failed for {input_file.name}; "
-        f"exit code: {result.returncode}"
-    )
+    write_log(f"FME failed for {input_file.name}; " f"exit code: {result.returncode}")
 
     return False
 
@@ -207,6 +198,7 @@ def run_fme(input_file: Path) -> bool:
 # File processing
 # ---------------------------------------------------------------------
 
+
 def process_file(input_file: Path) -> None:
     """Process one GeoJSON and update its job status."""
     with PROCESSING_LOCK:
@@ -214,17 +206,13 @@ def process_file(input_file: Path) -> None:
             return
 
         if input_file.suffix.lower() != ".geojson":
-            write_log(
-                f"Ignored unsupported file: {input_file.name}"
-            )
+            write_log(f"Ignored unsupported file: {input_file.name}")
             return
 
         job_id = extract_job_id(input_file)
         original_filename = extract_original_filename(input_file)
 
-        write_log(
-            f"Detected new GeoJSON: {input_file.name}"
-        )
+        write_log(f"Detected new GeoJSON: {input_file.name}")
 
         if job_id:
             update_job_status(
@@ -236,19 +224,14 @@ def process_file(input_file: Path) -> None:
 
         # Wait until the upload or copy operation has fully completed.
         if not wait_until_file_is_ready(input_file):
-            write_log(
-                f"File was not ready: {input_file.name}"
-            )
+            write_log(f"File was not ready: {input_file.name}")
 
             if job_id:
                 update_job_status(
                     job_id=job_id,
                     status="FAILED",
                     filename=original_filename,
-                    message=(
-                        "The uploaded file was not ready "
-                        "for processing."
-                    ),
+                    message=("The uploaded file was not ready " "for processing."),
                 )
 
             if input_file.exists():
@@ -262,10 +245,7 @@ def process_file(input_file: Path) -> None:
                     str(destination),
                 )
 
-                write_log(
-                    "Moved unready file to failed: "
-                    f"{destination.name}"
-                )
+                write_log("Moved unready file to failed: " f"{destination.name}")
 
             return
 
@@ -282,18 +262,14 @@ def process_file(input_file: Path) -> None:
                 str(destination),
             )
 
-            write_log(
-                f"Moved file to archive: {destination.name}"
-            )
+            write_log(f"Moved file to archive: {destination.name}")
 
             if job_id:
                 update_job_status(
                     job_id=job_id,
                     status="SUCCESS",
                     filename=original_filename,
-                    message=(
-                        "FME processing completed successfully."
-                    ),
+                    message=("FME processing completed successfully."),
                 )
 
         else:
@@ -307,9 +283,7 @@ def process_file(input_file: Path) -> None:
                 str(destination),
             )
 
-            write_log(
-                f"Moved file to failed: {destination.name}"
-            )
+            write_log(f"Moved file to failed: {destination.name}")
 
             if job_id:
                 update_job_status(
@@ -324,6 +298,7 @@ def process_file(input_file: Path) -> None:
 # Watchdog event handler
 # ---------------------------------------------------------------------
 
+
 class GeoJsonEventHandler(FileSystemEventHandler):
     """React when a GeoJSON file is added to incoming."""
 
@@ -336,10 +311,7 @@ class GeoJsonEventHandler(FileSystemEventHandler):
         now = time.time()
         last_processed = PROCESSED_PATHS.get(file_path)
 
-        if (
-            last_processed is not None
-            and now - last_processed < EVENT_DEBOUNCE_SECONDS
-        ):
+        if last_processed is not None and now - last_processed < EVENT_DEBOUNCE_SECONDS:
             return
 
         PROCESSED_PATHS[file_path] = now
@@ -360,11 +332,10 @@ class GeoJsonEventHandler(FileSystemEventHandler):
 # Existing file handling
 # ---------------------------------------------------------------------
 
+
 def process_existing_files() -> None:
     """Process GeoJSON files already present at startup."""
-    existing_files = sorted(
-        INCOMING_DIR.glob("*.geojson")
-    )
+    existing_files = sorted(INCOMING_DIR.glob("*.geojson"))
 
     for input_file in existing_files:
         process_file(input_file)
@@ -374,19 +345,16 @@ def process_existing_files() -> None:
 # Application entry point
 # ---------------------------------------------------------------------
 
+
 def main() -> None:
     """Start the real-time watcher."""
     create_required_directories()
 
     if not FME_EXE.exists():
-        raise FileNotFoundError(
-            f"FME executable not found: {FME_EXE}"
-        )
+        raise FileNotFoundError(f"FME executable not found: {FME_EXE}")
 
     if not FME_WORKSPACE.exists():
-        raise FileNotFoundError(
-            f"FME workspace not found: {FME_WORKSPACE}"
-        )
+        raise FileNotFoundError(f"FME workspace not found: {FME_WORKSPACE}")
 
     event_handler = GeoJsonEventHandler()
     observer = Observer()

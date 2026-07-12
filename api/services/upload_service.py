@@ -5,7 +5,6 @@ from fastapi import UploadFile
 
 from api.services.job_status import update_job_status
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 INCOMING_DIR = PROJECT_DIR / "incoming"
 
@@ -20,9 +19,7 @@ def validate_upload_filename(filename: str | None) -> str:
     suffix = Path(safe_filename).suffix.lower()
 
     if suffix not in ALLOWED_EXTENSIONS:
-        raise ValueError(
-            "Unsupported file type. Only .geojson files are allowed."
-        )
+        raise ValueError("Unsupported file type. Only .geojson files are allowed.")
 
     return safe_filename
 
@@ -37,9 +34,7 @@ async def save_uploaded_file(
 
     original_path = Path(safe_filename)
 
-    destination = INCOMING_DIR / (
-        f"{job_id}__{original_path.name}"
-    )
+    destination = INCOMING_DIR / (f"{job_id}__{original_path.name}")
 
     content = await upload_file.read()
 

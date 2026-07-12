@@ -1,5 +1,6 @@
 from api.database import get_connection
 
+
 def get_roads_geojson():
     conn = get_connection()
     cur = conn.cursor()
@@ -26,11 +27,14 @@ def get_roads_geojson():
     cur.close()
     conn.close()
     return result
+
+
 def get_roads_by_type_geojson(road_type):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         SELECT json_build_object(
             'type', 'FeatureCollection',
             'features', COALESCE(json_agg(
@@ -47,7 +51,9 @@ def get_roads_by_type_geojson(road_type):
         )
         FROM roads
         WHERE road_type = %s;
-    """, (road_type,))
+    """,
+        (road_type,),
+    )
 
     result = cur.fetchone()[0]
     cur.close()

@@ -3,7 +3,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 JOBS_DIR = PROJECT_DIR / "logs" / "jobs"
 

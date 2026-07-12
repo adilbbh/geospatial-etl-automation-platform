@@ -4,7 +4,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 INCOMING_DIR = PROJECT_DIR / "incoming"
@@ -82,10 +81,7 @@ def run_fme(input_file: Path) -> bool:
         write_log(f"FME completed successfully for: {input_file.name}")
         return True
 
-    write_log(
-        f"FME failed for {input_file.name}. "
-        f"Exit code: {result.returncode}"
-    )
+    write_log(f"FME failed for {input_file.name}. " f"Exit code: {result.returncode}")
     return False
 
 

@@ -3,7 +3,6 @@ from pathlib import Path
 
 import folium
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 INPUT_FILE = PROJECT_DIR / "data" / "roads.geojson"
 OUTPUT_FILE = PROJECT_DIR / "output" / "roads_map.html"
@@ -19,8 +18,8 @@ folium.GeoJson(
     name="Roads",
     tooltip=folium.GeoJsonTooltip(
         fields=["road_id", "road_name", "road_type"],
-        aliases=["Road ID", "Road Name", "Road Type"]
-    )
+        aliases=["Road ID", "Road Name", "Road Type"],
+    ),
 ).add_to(m)
 
 folium.LayerControl().add_to(m)

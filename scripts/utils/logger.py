@@ -1,7 +1,6 @@
 from datetime import datetime
 from pathlib import Path
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 LOG_DIR = PROJECT_DIR / "logs"
 LOG_FILE = LOG_DIR / "etl_log.txt"

@@ -36,33 +36,25 @@ def main() -> None:
     except FileNotFoundError:
         message = f"Input file not found: {INPUT_FILE}"
         log_message(message)
-        save_error_report([
-            {"dataset": INPUT_FILE.name, "errors": [message]}
-        ])
+        save_error_report([{"dataset": INPUT_FILE.name, "errors": [message]}])
         return
     except json.JSONDecodeError as exc:
         message = f"Invalid GeoJSON: {exc}"
         log_message(message)
-        save_error_report([
-            {"dataset": INPUT_FILE.name, "errors": [message]}
-        ])
+        save_error_report([{"dataset": INPUT_FILE.name, "errors": [message]}])
         return
 
     crs_errors = validate_crs(geojson)
     if crs_errors:
         log_message(f"CRS validation failed: {crs_errors}")
-        save_error_report([
-            {"dataset": INPUT_FILE.name, "errors": crs_errors}
-        ])
+        save_error_report([{"dataset": INPUT_FILE.name, "errors": crs_errors}])
         return
 
     features = geojson.get("features", [])
     if not isinstance(features, list):
         message = "GeoJSON 'features' must be a list"
         log_message(message)
-        save_error_report([
-            {"dataset": INPUT_FILE.name, "errors": [message]}
-        ])
+        save_error_report([{"dataset": INPUT_FILE.name, "errors": [message]}])
         return
 
     duplicate_road_ids = find_duplicate_road_ids(features)
