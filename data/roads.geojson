@@ -1,0 +1,29 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "road_id": "R001",
+        "road_name": "Main Street",
+        "road_type": "primary"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[19.944, 50.064], [19.950, 50.068]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "road_id": "R002",
+        "road_name": "Utility Road",
+        "road_type": "secondary"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[19.951, 50.061], [19.958, 50.065]]
+      }
+    }
+  ]
+}
