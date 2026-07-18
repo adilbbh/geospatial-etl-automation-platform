@@ -6,8 +6,7 @@ def get_roads_geojson():
     cur = conn.cursor()
 
     try:
-        cur.execute(
-            """
+        cur.execute("""
             SELECT json_build_object(
                 'type', 'FeatureCollection',
                 'features', COALESCE(
@@ -27,8 +26,7 @@ def get_roads_geojson():
                 )
             )
             FROM roads;
-            """
-        )
+            """)
 
         return cur.fetchone()[0]
 

@@ -1,13 +1,10 @@
 from pathlib import Path
+
 import geopandas as gpd
+
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
-DATA_PATH = (
-    PROJECT_DIR
-    / "data"
-    / "processed"
-    / "austin_roads_1000.geojson"
-)
+DATA_PATH = PROJECT_DIR / "data" / "processed" / "austin_roads_1000.geojson"
 REQUIRED_COLUMNS = [
     "road_id",
     "osm_id",
@@ -22,12 +19,12 @@ REQUIRED_COLUMNS = [
     "country",
     "geometry",
 ]
+
+
 def main() -> None:
     print(f"Reading dataset: {DATA_PATH}")
     if not DATA_PATH.exists():
-        raise FileNotFoundError(
-            f"Dataset not found: {DATA_PATH}"
-        )
+        raise FileNotFoundError(f"Dataset not found: {DATA_PATH}")
     roads = gpd.read_file(DATA_PATH)
 
     print("\n--- BASIC INFORMATION ---")
@@ -36,9 +33,7 @@ def main() -> None:
     print(f"Columns: {list(roads.columns)}")
 
     missing_columns = [
-        column
-        for column in REQUIRED_COLUMNS
-        if column not in roads.columns
+        column for column in REQUIRED_COLUMNS if column not in roads.columns
     ]
     print("\n--- SCHEMA CHECK ---")
 
@@ -62,23 +57,14 @@ def main() -> None:
     print("\n--- ATTRIBUTE COMPLETENESS ---")
 
     missing_names = int(
-    roads["road_name"]
-    .replace(["nan", "None", "null", ""], None)
-    .isna()
-    .sum()
-)
+        roads["road_name"].replace(["nan", "None", "null", ""], None).isna().sum()
+    )
     missing_speed = int(
-    roads["max_speed"]
-    .replace(["nan", "None", "null", ""], None)
-    .isna()
-    .sum()
-)
+        roads["max_speed"].replace(["nan", "None", "null", ""], None).isna().sum()
+    )
     missing_road_type = int(
-    roads["road_type"]
-    .replace(["nan", "None", "null", ""], None)
-    .isna()
-    .sum()
-)
+        roads["road_type"].replace(["nan", "None", "null", ""], None).isna().sum()
+    )
     print(f"Missing road names: {missing_names}")
     print(f"Missing speed limits: {missing_speed}")
     print(f"Missing road types: {missing_road_type}")
@@ -98,48 +84,32 @@ def main() -> None:
         "length_m",
     ]
 
-    print(
-        roads[sample_columns]
-        .head(10)
-        .to_string(index=False)
-    )
+    print(roads[sample_columns].head(10).to_string(index=False))
 
     print("\n--- FINAL RESULT ---")
 
     errors = []
 
     if len(roads) != 1000:
-        errors.append(
-            f"Expected 1000 features but found {len(roads)}."
-        )
+        errors.append(f"Expected 1000 features but found {len(roads)}.")
 
     if roads.crs is None:
         errors.append("CRS is missing.")
 
     elif roads.crs.to_epsg() != 4326:
-        errors.append(
-            f"Expected EPSG:4326 but found {roads.crs}."
-        )
+        errors.append(f"Expected EPSG:4326 but found {roads.crs}.")
 
     if missing_columns:
-        errors.append(
-            f"Missing required columns: {missing_columns}"
-        )
+        errors.append(f"Missing required columns: {missing_columns}")
 
     if empty_count > 0:
-        errors.append(
-            f"Dataset contains {empty_count} empty geometries."
-        )
+        errors.append(f"Dataset contains {empty_count} empty geometries.")
 
     if null_geometry_count > 0:
-        errors.append(
-            f"Dataset contains {null_geometry_count} null geometries."
-        )
+        errors.append(f"Dataset contains {null_geometry_count} null geometries.")
 
     if invalid_count > 0:
-        errors.append(
-            f"Dataset contains {invalid_count} invalid geometries."
-        )
+        errors.append(f"Dataset contains {invalid_count} invalid geometries.")
 
     if errors:
         print("Dataset validation failed:")
@@ -150,6 +120,7 @@ def main() -> None:
         raise SystemExit(1)
 
     print("Dataset passed all essential validation checks.")
+
 
 if __name__ == "__main__":
     main()

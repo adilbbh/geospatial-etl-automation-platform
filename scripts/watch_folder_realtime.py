@@ -9,7 +9,6 @@ from threading import Lock
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -20,10 +19,10 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 
-from api.services.job_status import update_job_status  # noqa: E402
 from ingest_shapefile_zip import process_shapefile_zip  # noqa: E402
 from load_roads import process_geojson  # noqa: E402
 
+from api.services.job_status import update_job_status  # noqa: E402
 
 INCOMING_DIR = PROJECT_DIR / "incoming"
 ARCHIVE_DIR = PROJECT_DIR / "archive"
@@ -33,11 +32,7 @@ PROCESSED_DIR = PROJECT_DIR / "data" / "processed"
 REJECTED_DIR = PROJECT_DIR / "data" / "rejected"
 
 FME_EXE = Path(r"C:\Program Files\FME\fme.exe")
-FME_WORKSPACE = (
-    PROJECT_DIR
-    / "fme_workspaces"
-    / "roads_to_postgis.fmw"
-)
+FME_WORKSPACE = PROJECT_DIR / "fme_workspaces" / "roads_to_postgis.fmw"
 
 SUPPORTED_EXTENSIONS = {".geojson", ".zip"}
 
@@ -52,9 +47,7 @@ def write_log(message: str) -> None:
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     full_message = f"[{timestamp}] {message}"
 
     print(full_message, flush=True)
@@ -91,14 +84,9 @@ def build_destination_path(
 ) -> Path:
     """Create a unique archived or failed filename."""
 
-    timestamp = datetime.now().strftime(
-        "%Y%m%d_%H%M%S_%f"
-    )
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
-    return destination_dir / (
-        f"{source_file.stem}_{timestamp}"
-        f"{source_file.suffix}"
-    )
+    return destination_dir / (f"{source_file.stem}_{timestamp}" f"{source_file.suffix}")
 
 
 def extract_job_id(
@@ -142,10 +130,7 @@ def wait_until_file_is_ready(
             time.sleep(delay_seconds)
             continue
 
-        if (
-            current_size > 0
-            and current_size == previous_size
-        ):
+        if current_size > 0 and current_size == previous_size:
             return True
 
         previous_size = current_size
@@ -160,15 +145,11 @@ def run_fme(
     """Process a GeoJSON file using the local FME workspace."""
 
     if not FME_EXE.exists():
-        write_log(
-            f"FME executable not found: {FME_EXE}"
-        )
+        write_log(f"FME executable not found: {FME_EXE}")
         return False
 
     if not FME_WORKSPACE.exists():
-        write_log(
-            f"FME workspace not found: {FME_WORKSPACE}"
-        )
+        write_log(f"FME workspace not found: {FME_WORKSPACE}")
         return False
 
     command = [
@@ -178,9 +159,7 @@ def run_fme(
         str(input_file),
     ]
 
-    write_log(
-        f"Starting FME processing: {input_file.name}"
-    )
+    write_log(f"Starting FME processing: {input_file.name}")
 
     try:
         result = subprocess.run(
@@ -190,9 +169,7 @@ def run_fme(
             check=False,
         )
     except OSError as error:
-        write_log(
-            f"Could not start FME: {error}"
-        )
+        write_log(f"Could not start FME: {error}")
         return False
 
     if result.stdout:
@@ -203,16 +180,10 @@ def run_fme(
         print(result.stderr, flush=True)
 
     if result.returncode == 0:
-        write_log(
-            f"FME completed successfully: "
-            f"{input_file.name}"
-        )
+        write_log(f"FME completed successfully: " f"{input_file.name}")
         return True
 
-    write_log(
-        f"FME failed for {input_file.name}; "
-        f"exit code: {result.returncode}"
-    )
+    write_log(f"FME failed for {input_file.name}; " f"exit code: {result.returncode}")
 
     return False
 
@@ -227,34 +198,21 @@ def process_zip(
         "_",
     )
 
-    output_file = (
-        PROCESSED_DIR
-        / f"{safe_stem}_ingested.geojson"
-    )
+    output_file = PROCESSED_DIR / f"{safe_stem}_ingested.geojson"
 
-    rejected_file = (
-        REJECTED_DIR
-        / f"{safe_stem}_rejected.geojson"
-    )
+    rejected_file = REJECTED_DIR / f"{safe_stem}_rejected.geojson"
 
     try:
-        write_log(
-            f"Starting Shapefile ZIP ingestion: "
-            f"{input_file.name}"
-        )
+        write_log(f"Starting Shapefile ZIP ingestion: " f"{input_file.name}")
 
-        valid_count, rejected_count = (
-            process_shapefile_zip(
-                input_zip=input_file,
-                output_file=output_file,
-                rejected_file=rejected_file,
-            )
+        valid_count, rejected_count = process_shapefile_zip(
+            input_zip=input_file,
+            output_file=output_file,
+            rejected_file=rejected_file,
         )
 
         if valid_count == 0:
-            raise RuntimeError(
-                "The Shapefile ZIP contained no valid roads."
-            )
+            raise RuntimeError("The Shapefile ZIP contained no valid roads.")
 
         write_log(
             f"ZIP ingestion completed: "
@@ -264,17 +222,12 @@ def process_zip(
 
         process_geojson(output_file)
 
-        write_log(
-            f"PostGIS loading completed: "
-            f"{output_file.name}"
-        )
+        write_log(f"PostGIS loading completed: " f"{output_file.name}")
 
         return True
 
     except Exception as error:
-        write_log(
-            f"ZIP processing failed: {error}"
-        )
+        write_log(f"ZIP processing failed: {error}")
         return False
 
 
@@ -309,21 +262,13 @@ def process_file(
         suffix = input_file.suffix.lower()
 
         if suffix not in SUPPORTED_EXTENSIONS:
-            write_log(
-                f"Ignored unsupported file: "
-                f"{input_file.name}"
-            )
+            write_log(f"Ignored unsupported file: " f"{input_file.name}")
             return
 
         job_id = extract_job_id(input_file)
-        original_filename = extract_original_filename(
-            input_file
-        )
+        original_filename = extract_original_filename(input_file)
 
-        write_log(
-            f"Detected new {suffix} file: "
-            f"{input_file.name}"
-        )
+        write_log(f"Detected new {suffix} file: " f"{input_file.name}")
 
         if job_id:
             update_job_status(
@@ -334,19 +279,14 @@ def process_file(
             )
 
         if not wait_until_file_is_ready(input_file):
-            write_log(
-                f"File was not ready: {input_file.name}"
-            )
+            write_log(f"File was not ready: {input_file.name}")
 
             if job_id:
                 update_job_status(
                     job_id=job_id,
                     status="FAILED",
                     filename=original_filename,
-                    message=(
-                        "The uploaded file was not ready "
-                        "for processing."
-                    ),
+                    message=("The uploaded file was not ready " "for processing."),
                 )
 
             if input_file.exists():
@@ -355,10 +295,7 @@ def process_file(
                     FAILED_DIR,
                 )
 
-                write_log(
-                    f"Moved unready file to failed: "
-                    f"{destination.name}"
-                )
+                write_log(f"Moved unready file to failed: " f"{destination.name}")
 
             return
 
@@ -373,20 +310,14 @@ def process_file(
                 ARCHIVE_DIR,
             )
 
-            write_log(
-                f"Moved file to archive: "
-                f"{destination.name}"
-            )
+            write_log(f"Moved file to archive: " f"{destination.name}")
 
             if job_id:
                 update_job_status(
                     job_id=job_id,
                     status="SUCCESS",
                     filename=original_filename,
-                    message=(
-                        "ETL processing completed "
-                        "successfully."
-                    ),
+                    message=("ETL processing completed " "successfully."),
                 )
 
         else:
@@ -395,10 +326,7 @@ def process_file(
                 FAILED_DIR,
             )
 
-            write_log(
-                f"Moved file to failed: "
-                f"{destination.name}"
-            )
+            write_log(f"Moved file to failed: " f"{destination.name}")
 
             if job_id:
                 update_job_status(
@@ -409,9 +337,7 @@ def process_file(
                 )
 
 
-class SpatialFileEventHandler(
-    FileSystemEventHandler
-):
+class SpatialFileEventHandler(FileSystemEventHandler):
     """React when a supported spatial file enters incoming."""
 
     def _handle_path(
@@ -420,22 +346,13 @@ class SpatialFileEventHandler(
     ) -> None:
         file_path = Path(raw_path)
 
-        if (
-            file_path.suffix.lower()
-            not in SUPPORTED_EXTENSIONS
-        ):
+        if file_path.suffix.lower() not in SUPPORTED_EXTENSIONS:
             return
 
         now = time.time()
-        last_processed = PROCESSED_PATHS.get(
-            file_path
-        )
+        last_processed = PROCESSED_PATHS.get(file_path)
 
-        if (
-            last_processed is not None
-            and now - last_processed
-            < EVENT_DEBOUNCE_SECONDS
-        ):
+        if last_processed is not None and now - last_processed < EVENT_DEBOUNCE_SECONDS:
             return
 
         PROCESSED_PATHS[file_path] = now
@@ -456,11 +373,7 @@ def process_existing_files() -> None:
     existing_files = sorted(
         path
         for path in INCOMING_DIR.iterdir()
-        if (
-            path.is_file()
-            and path.suffix.lower()
-            in SUPPORTED_EXTENSIONS
-        )
+        if (path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS)
     )
 
     for input_file in existing_files:
@@ -483,18 +396,10 @@ def main() -> None:
 
     write_log("Real-time folder watcher started.")
     write_log(f"Watching: {INCOMING_DIR}")
-    write_log(
-        "Supported files: .geojson, .zip"
-    )
+    write_log("Supported files: .geojson, .zip")
 
-    if (
-        not FME_EXE.exists()
-        or not FME_WORKSPACE.exists()
-    ):
-        write_log(
-            "FME is not fully configured. "
-            "ZIP processing remains available."
-        )
+    if not FME_EXE.exists() or not FME_WORKSPACE.exists():
+        write_log("FME is not fully configured. " "ZIP processing remains available.")
 
     process_existing_files()
 
@@ -505,16 +410,12 @@ def main() -> None:
             time.sleep(1)
 
     except KeyboardInterrupt:
-        write_log(
-            "Stopping real-time folder watcher."
-        )
+        write_log("Stopping real-time folder watcher.")
         observer.stop()
 
     observer.join()
 
-    write_log(
-        "Real-time folder watcher stopped."
-    )
+    write_log("Real-time folder watcher stopped.")
 
 
 if __name__ == "__main__":
