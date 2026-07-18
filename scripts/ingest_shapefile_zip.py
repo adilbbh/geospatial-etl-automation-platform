@@ -1,34 +1,19 @@
 from __future__ import annotations
+
+import argparse
 import shutil
 import zipfile
 from pathlib import Path
+
 import geopandas as gpd
 import pandas as pd
-PROJECT_DIR = Path(__file__).resolve().parents[1]
 
-INPUT_ZIP = (
-    PROJECT_DIR
-    / "data"
-    / "source"
-    / "austin_roads_1000.zip"
-)
-EXTRACT_DIR = (
-    PROJECT_DIR
-    / "cache"
-    / "austin_roads_1000"
-)
-OUTPUT_FILE = (
-    PROJECT_DIR
-    / "data"
-    / "processed"
-    / "austin_roads_ingested.geojson"
-)
-REJECTED_FILE = (
-    PROJECT_DIR
-    / "data"
-    / "rejected"
-    / "austin_roads_rejected.geojson"
-)
+
+PROJECT_DIR = Path(__file__).resolve().parents[1]
+CACHE_DIR = PROJECT_DIR / "cache" / "shapefile_uploads"
+PROCESSED_DIR = PROJECT_DIR / "data" / "processed"
+REJECTED_DIR = PROJECT_DIR / "data" / "rejected"
+
 REQUIRED_COLUMNS = [
     "road_id",
     "osm_id",
@@ -44,30 +29,62 @@ REQUIRED_COLUMNS = [
     "geometry",
 ]
 
-def extract_zip() -> Path:
-    if not INPUT_ZIP.exists():
+
+def safe_extract_zip(
+    input_zip: Path,
+    extract_dir: Path,
+) -> None:
+    """Extract a ZIP file while preventing unsafe paths."""
+
+    if not input_zip.exists():
         raise FileNotFoundError(
-            f"Input ZIP not found: {INPUT_ZIP}"
+            f"Input ZIP not found: {input_zip}"
         )
 
-    if EXTRACT_DIR.exists():
-        shutil.rmtree(EXTRACT_DIR)
+    if not zipfile.is_zipfile(input_zip):
+        raise ValueError(
+            f"The uploaded file is not a valid ZIP: {input_zip.name}"
+        )
 
-    EXTRACT_DIR.mkdir(parents=True, exist_ok=True)
+    if extract_dir.exists():
+        shutil.rmtree(extract_dir)
 
-    with zipfile.ZipFile(INPUT_ZIP, "r") as zip_file:
-        zip_file.extractall(EXTRACT_DIR)
+    extract_dir.mkdir(parents=True, exist_ok=True)
+    extract_root = extract_dir.resolve()
 
-    shapefiles = list(EXTRACT_DIR.rglob("*.shp"))
+    with zipfile.ZipFile(input_zip, "r") as archive:
+        for member in archive.infolist():
+            destination = (
+                extract_dir / member.filename
+            ).resolve()
+
+            if (
+                destination != extract_root
+                and extract_root not in destination.parents
+            ):
+                raise ValueError(
+                    f"Unsafe ZIP entry detected: {member.filename}"
+                )
+
+        archive.extractall(extract_dir)
+
+
+def find_shapefile(extract_dir: Path) -> Path:
+    """Find exactly one Shapefile inside the extracted ZIP."""
+
+    shapefiles = list(extract_dir.rglob("*.shp"))
 
     if not shapefiles:
         raise FileNotFoundError(
-            "No .shp file found inside the ZIP."
+            "No .shp file was found inside the ZIP."
         )
 
     if len(shapefiles) > 1:
+        names = [path.name for path in shapefiles]
+
         raise ValueError(
-            f"Expected one shapefile, found {len(shapefiles)}."
+            "Expected one Shapefile, but found "
+            f"{len(shapefiles)}: {names}"
         )
 
     return shapefiles[0]
@@ -76,6 +93,8 @@ def extract_zip() -> Path:
 def normalize_missing_values(
     roads: gpd.GeoDataFrame,
 ) -> gpd.GeoDataFrame:
+    """Replace common text representations of missing values."""
+
     text_columns = [
         "osm_id",
         "road_name",
@@ -87,6 +106,7 @@ def normalize_missing_values(
         "state",
         "country",
     ]
+
     missing_tokens = [
         "",
         "nan",
@@ -96,6 +116,7 @@ def normalize_missing_values(
         "null",
         "NULL",
     ]
+
     for column in text_columns:
         if column in roads.columns:
             roads[column] = roads[column].replace(
@@ -109,6 +130,8 @@ def normalize_missing_values(
 def validate_schema(
     roads: gpd.GeoDataFrame,
 ) -> None:
+    """Validate required columns and coordinate system."""
+
     missing_columns = [
         column
         for column in REQUIRED_COLUMNS
@@ -121,12 +144,16 @@ def validate_schema(
         )
 
     if roads.crs is None:
-        raise ValueError("Input dataset has no CRS.")
+        raise ValueError(
+            "The uploaded Shapefile does not contain a CRS."
+        )
 
 
 def split_valid_and_rejected(
     roads: gpd.GeoDataFrame,
 ) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """Separate valid road geometry from rejected records."""
+
     valid_geometry = (
         roads.geometry.notna()
         & ~roads.geometry.is_empty
@@ -142,12 +169,30 @@ def split_valid_and_rejected(
     return valid_roads, rejected_roads
 
 
-def main() -> None:
-    print(f"Input ZIP: {INPUT_ZIP}")
+def process_shapefile_zip(
+    input_zip: Path,
+    output_file: Path,
+    rejected_file: Path,
+) -> tuple[int, int]:
+    """Process one Shapefile ZIP and create accepted/rejected outputs."""
 
-    shapefile_path = extract_zip()
+    input_zip = input_zip.resolve()
+    output_file = output_file.resolve()
+    rejected_file = rejected_file.resolve()
 
-    print(f"Extracted shapefile: {shapefile_path}")
+    extraction_name = input_zip.stem.replace("__", "_")
+    extract_dir = CACHE_DIR / extraction_name
+
+    print(f"Input ZIP: {input_zip}")
+
+    safe_extract_zip(
+        input_zip=input_zip,
+        extract_dir=extract_dir,
+    )
+
+    shapefile_path = find_shapefile(extract_dir)
+
+    print(f"Extracted Shapefile: {shapefile_path}")
 
     roads = gpd.read_file(shapefile_path)
 
@@ -164,40 +209,98 @@ def main() -> None:
         roads
     )
 
-    OUTPUT_FILE.parent.mkdir(
+    output_file.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
-    REJECTED_FILE.parent.mkdir(
+    rejected_file.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
     valid_roads.to_file(
-        OUTPUT_FILE,
+        output_file,
         driver="GeoJSON",
     )
 
-    if not rejected_roads.empty:
+    if rejected_roads.empty:
+        if rejected_file.exists():
+            rejected_file.unlink()
+    else:
         rejected_roads.to_file(
-            REJECTED_FILE,
+            rejected_file,
             driver="GeoJSON",
         )
-    elif REJECTED_FILE.exists():
-        REJECTED_FILE.unlink()
 
     print()
     print("--- INGESTION RESULT ---")
     print(f"Accepted features: {len(valid_roads)}")
     print(f"Rejected features: {len(rejected_roads)}")
     print(f"Output CRS: {valid_roads.crs}")
-    print(f"Accepted output: {OUTPUT_FILE}")
+    print(f"Accepted output: {output_file}")
 
     if rejected_roads.empty:
         print("Rejected output: none")
     else:
-        print(f"Rejected output: {REJECTED_FILE}")
+        print(f"Rejected output: {rejected_file}")
+
+    return len(valid_roads), len(rejected_roads)
+
+
+def parse_arguments() -> argparse.Namespace:
+    """Read command-line arguments."""
+
+    parser = argparse.ArgumentParser(
+        description=(
+            "Extract and validate a Shapefile ZIP package."
+        )
+    )
+
+    parser.add_argument(
+        "input_zip",
+        type=Path,
+        help="Path to the input Shapefile ZIP.",
+    )
+
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Optional accepted GeoJSON output path.",
+    )
+
+    parser.add_argument(
+        "--rejected",
+        type=Path,
+        help="Optional rejected GeoJSON output path.",
+    )
+
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_arguments()
+
+    safe_stem = args.input_zip.stem.replace("__", "_")
+
+    output_file = (
+        args.output
+        if args.output
+        else PROCESSED_DIR / f"{safe_stem}_ingested.geojson"
+    )
+
+    rejected_file = (
+        args.rejected
+        if args.rejected
+        else REJECTED_DIR / f"{safe_stem}_rejected.geojson"
+    )
+
+    process_shapefile_zip(
+        input_zip=args.input_zip,
+        output_file=output_file,
+        rejected_file=rejected_file,
+    )
+
 
 if __name__ == "__main__":
     main()
