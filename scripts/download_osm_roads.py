@@ -1,9 +1,8 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import geopandas as gpd
 import osmnx as ox
-
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
@@ -19,6 +18,7 @@ CENTER_POINT = (30.2672, -97.7431)
 DOWNLOAD_DISTANCE_METERS = 4000
 TARGET_ROADS = 1000
 
+
 def clean_osm_value(value):
     """Convert OSM values into clean, shapefile-safe text."""
 
@@ -26,11 +26,7 @@ def clean_osm_value(value):
         return None
 
     if isinstance(value, list):
-        cleaned_items = [
-            str(item)
-            for item in value
-            if item is not None
-        ]
+        cleaned_items = [str(item) for item in value if item is not None]
 
         return ", ".join(cleaned_items) or None
 
@@ -47,6 +43,7 @@ def clean_osm_value(value):
         return None
 
     return text
+
 
 def main():
     SOURCE_DIR.mkdir(parents=True, exist_ok=True)
@@ -139,6 +136,7 @@ def main():
     print(f"CRS: {roads.crs}")
     print(f"Shapefile ZIP: {old_zip}")
     print(f"Processed GeoJSON: {GEOJSON_PATH}")
+
 
 if __name__ == "__main__":
     main()

@@ -5,7 +5,6 @@ from fastapi import UploadFile
 
 from api.services.job_status import update_job_status
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 INCOMING_DIR = PROJECT_DIR / "incoming"
 
@@ -24,9 +23,7 @@ def validate_upload_filename(filename: str | None) -> str:
     if suffix not in ALLOWED_EXTENSIONS:
         allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
 
-        raise ValueError(
-            f"Unsupported file type. Allowed file types: {allowed}"
-        )
+        raise ValueError(f"Unsupported file type. Allowed file types: {allowed}")
 
     return safe_filename
 
@@ -38,17 +35,12 @@ async def save_uploaded_file(
 
     INCOMING_DIR.mkdir(parents=True, exist_ok=True)
 
-    safe_filename = validate_upload_filename(
-        upload_file.filename
-    )
+    safe_filename = validate_upload_filename(upload_file.filename)
 
     job_id = uuid4().hex
     original_path = Path(safe_filename)
 
-    destination = (
-        INCOMING_DIR
-        / f"{job_id}__{original_path.name}"
-    )
+    destination = INCOMING_DIR / f"{job_id}__{original_path.name}"
 
     content = await upload_file.read()
 

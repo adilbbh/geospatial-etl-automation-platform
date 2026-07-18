@@ -14,14 +14,10 @@ from validators.geometry_validator import validate_geometry
 from validators.schema_validator import validate_schema
 from writers.postgis_writer import write_roads_to_postgis
 
-
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 DEFAULT_INPUT_FILE = (
-    PROJECT_DIR
-    / "data"
-    / "processed"
-    / "austin_roads_ingested.geojson"
+    PROJECT_DIR / "data" / "processed" / "austin_roads_ingested.geojson"
 )
 
 Feature = Dict[str, Any]
@@ -117,19 +113,15 @@ def process_geojson(
 
     duplicate_road_ids = find_duplicate_road_ids(features)
 
-    log_message(
-        f"Duplicate road IDs: {duplicate_road_ids}"
-    )
+    log_message(f"Duplicate road IDs: {duplicate_road_ids}")
     log_message(f"Total features: {len(features)}")
 
-    valid_count, invalid_count, error_report = (
-        write_roads_to_postgis(
-            features=features,
-            input_file_name=input_file.name,
-            duplicate_road_ids=duplicate_road_ids,
-            validate_feature=validate_feature,
-            log_message=log_message,
-        )
+    valid_count, invalid_count, error_report = write_roads_to_postgis(
+        features=features,
+        input_file_name=input_file.name,
+        duplicate_road_ids=duplicate_road_ids,
+        validate_feature=validate_feature,
+        log_message=log_message,
     )
 
     save_error_report(error_report)
@@ -146,9 +138,7 @@ def process_geojson(
     log_message(f"Invalid features skipped: {invalid_count}")
 
     if valid_count == 0:
-        raise RuntimeError(
-            "No valid features were loaded into PostGIS."
-        )
+        raise RuntimeError("No valid features were loaded into PostGIS.")
 
     return valid_count, invalid_count
 
@@ -157,10 +147,7 @@ def parse_arguments() -> argparse.Namespace:
     """Read the optional GeoJSON path from the command line."""
 
     parser = argparse.ArgumentParser(
-        description=(
-            "Validate a road GeoJSON dataset and load it "
-            "into PostGIS."
-        )
+        description=("Validate a road GeoJSON dataset and load it " "into PostGIS.")
     )
 
     parser.add_argument(
@@ -169,8 +156,7 @@ def parse_arguments() -> argparse.Namespace:
         type=Path,
         default=DEFAULT_INPUT_FILE,
         help=(
-            "GeoJSON file to process. The default is the "
-            "Austin ingested dataset."
+            "GeoJSON file to process. The default is the " "Austin ingested dataset."
         ),
     )
 

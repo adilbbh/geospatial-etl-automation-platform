@@ -24,15 +24,9 @@ def validate_attributes(feature):
 
     # Some OSM records contain combined values such as:
     # "secondary, secondary_link"
-    road_types = {
-        value.strip()
-        for value in road_type.split(",")
-        if value.strip()
-    }
+    road_types = {value.strip() for value in road_type.split(",") if value.strip()}
 
-    invalid_types = sorted(
-        road_types - ALLOWED_ROAD_TYPES
-    )
+    invalid_types = sorted(road_types - ALLOWED_ROAD_TYPES)
 
     if invalid_types:
         errors.append(

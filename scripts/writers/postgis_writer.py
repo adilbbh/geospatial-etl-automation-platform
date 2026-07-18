@@ -19,12 +19,10 @@ DB_CONFIG = {
     "user": os.getenv("DB_USER"),
     "password": os.getenv("DB_PASSWORD"),
 }
+
+
 def write_roads_to_postgis(
-    features,
-    input_file_name,
-    duplicate_road_ids,
-    validate_feature,
-    log_message
+    features, input_file_name, duplicate_road_ids, validate_feature, log_message
 ):
     conn = psycopg2.connect(**DB_CONFIG)
     cur = conn.cursor()
@@ -47,10 +45,12 @@ def write_roads_to_postgis(
 
         if errors:
             invalid_count += 1
-            error_report.append({
-                "road_id": feature.get("properties", {}).get("road_id"),
-                "errors": errors
-            })
+            error_report.append(
+                {
+                    "road_id": feature.get("properties", {}).get("road_id"),
+                    "errors": errors,
+                }
+            )
             log_message(f"Invalid feature: {errors}")
             continue
 
@@ -58,10 +58,12 @@ def write_roads_to_postgis(
 
         if props.get("road_id") in duplicate_road_ids:
             invalid_count += 1
-            error_report.append({
-                "road_id": props.get("road_id"),
-                "errors": [f"Duplicate road_id: {props.get('road_id')}"]
-            })
+            error_report.append(
+                {
+                    "road_id": props.get("road_id"),
+                    "errors": [f"Duplicate road_id: {props.get('road_id')}"],
+                }
+            )
             log_message(f"Invalid feature: duplicate road_id {props.get('road_id')}")
             continue
 
