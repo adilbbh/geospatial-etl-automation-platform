@@ -23,6 +23,7 @@ postgis_data/
 pgadmin_data/
 geoserver_data/
 
+
 # FME runtime and backup files
 *.ffs
 *.fmw.bak
@@ -38,3 +39,40 @@ Thumbs.db
 
 # Temporarily exclude FME workspaces containing credentials
 fme_workspaces/*.fmw
+
+
+# Ignore all FME workspaces by default
+fme_workspaces/*.fmw
+
+# Allow only the sanitized public workspace later
+!fme_workspaces/roads_to_postgis_public.fmw
+
+# FME recovery, logs and temporary files
+*.fmw.recover
+*.recover
+*.log
+*.ffs
+*.fmw.bak
+
+# Generated Austin dataset files
+data/source/austin_roads_1000/
+data/processed/
+data/rejected/
+
+# Temporary ETL extraction and runtime outputs
+cache/
+logs/
+failed/
+archive/
+output/
+
+# Local service data
+postgis_data/
+pgadmin_data/
+geoserver_data/
+
+# Python cache
+__pycache__/
+*.pyc
+# Local FME workspaces and connection details
+fme_workspaces/

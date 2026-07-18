@@ -15,7 +15,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <script>
-    const map = L.map('map').setView([50.064, 19.944], 14);
+    const map = L.map('map').setView([30.2672, -97.7431], 13);
 
     const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19
@@ -45,9 +45,10 @@
           onEachFeature: function (feature, layer) {
             layer.bindPopup(`
               <b>FastAPI Road</b><br>
-              Name: ${feature.properties.street_name}<br>
+              Name: ${feature.properties.road_name || 'Unnamed road'}<br>
               ID: ${feature.properties.road_id}<br>
-              Type: ${feature.properties.road_type}
+              Type: ${feature.properties.road_type}<br>
+              Source: ${feature.properties.source_file || 'Unknown'}
             `);
           }
         }).addTo(map);
@@ -63,11 +64,12 @@
           style: { weight: 2 },
           onEachFeature: function (feature, layer) {
             layer.bindPopup(`
-              <b>GeoServer WFS Road</b><br>
-              Name: ${feature.properties.street_name}<br>
+             <b>GeoServer WFS Road</b><br>
+              Name: ${feature.properties.road_name || 'Unnamed road'}<br>
               ID: ${feature.properties.road_id}<br>
-              Type: ${feature.properties.road_type}
-            `);
+              Type: ${feature.properties.road_type}<br>
+              Source: ${feature.properties.source_file || 'Unknown'}
+           `);
           }
         });
 

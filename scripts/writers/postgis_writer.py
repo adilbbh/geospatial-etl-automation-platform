@@ -1,7 +1,8 @@
 import json
 import os
-import psycopg2
 from pathlib import Path
+
+import psycopg2
 
 try:
     from dotenv import load_dotenv
@@ -30,8 +31,7 @@ def write_roads_to_postgis(
 
     cur.execute("TRUNCATE TABLE roads RESTART IDENTITY;")
 
-    insert_sqlr
-    = """
+    insert_sql = """
         INSERT INTO roads
         (road_id, road_name, road_type, source_file, geom)
         VALUES

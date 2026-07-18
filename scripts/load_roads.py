@@ -14,7 +14,12 @@ from validators.schema_validator import validate_schema
 from writers.postgis_writer import write_roads_to_postgis
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
-INPUT_FILE = PROJECT_DIR / "data" / "roads.geojson"
+INPUT_FILE = (
+    PROJECT_DIR
+    / "data"
+    / "processed"
+    / "austin_roads_ingested.geojson"
+)
 
 Feature = Dict[str, Any]
 GeoJSON = Dict[str, Any]

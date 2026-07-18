@@ -1,5 +1,6 @@
 from fastapi import APIRouter
-from api.services.road_service import get_roads_geojson, get_roads_by_type_geojson
+
+from api.services.road_service import get_roads_by_type_geojson, get_roads_geojson
 
 router = APIRouter()
 
