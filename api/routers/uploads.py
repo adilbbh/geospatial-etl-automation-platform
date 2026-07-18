@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from api.services.upload_service import save_uploaded_file
 
+
 router = APIRouter(
     prefix="/upload",
     tags=["Uploads"],
@@ -9,7 +10,11 @@ router = APIRouter(
 
 
 @router.post("")
-async def upload_geojson(file: UploadFile = File(...)):
+async def upload_spatial_file(
+    file: UploadFile = File(...),
+):
+    """Upload a GeoJSON file or Shapefile ZIP package."""
+
     try:
         saved_path, job_id = await save_uploaded_file(file)
 
@@ -33,4 +38,5 @@ async def upload_geojson(file: UploadFile = File(...)):
         "status": "QUEUED",
         "message": "File saved for ETL processing.",
         "internal_filename": saved_path.name,
+        "file_type": saved_path.suffix.lower(),
     }
