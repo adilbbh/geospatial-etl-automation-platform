@@ -118,13 +118,7 @@ The complete Austin road workflow is working successfully:
 
 ## Planned Improvements
 
-* Shapefile ZIP upload through FastAPI
-* Automated GeoServer publishing
-* Bulk database loading
-* Automated tests
-* GitHub Actions CI/CD
-* Cloud deployment
-* ETL monitoring dashboard
+* In Progress
 
 ## Author
 
