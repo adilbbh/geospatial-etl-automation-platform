@@ -34,10 +34,13 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Check Black formatting
-        run: python -m black --check api scripts
+        run: python -m black --check api scripts tests
 
       - name: Check import sorting
-        run: python -m isort --check-only --profile black api scripts
+        run: python -m isort --check-only --profile black api scripts tests
 
       - name: Compile Python files
-        run: python -m compileall -q api scripts
+        run: python -m compileall -q api scripts tests
+
+      - name: Run API tests
+        run: python -m pytest -q
