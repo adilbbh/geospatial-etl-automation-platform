@@ -7,6 +7,8 @@ load_dotenv()
 
 
 def get_connection():
+    """Create a PostgreSQL/PostGIS database connection."""
+
     required_variables = [
         "DB_HOST",
         "DB_PORT",
@@ -31,3 +33,34 @@ def get_connection():
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
     )
+
+
+def check_database_health() -> dict[str, str]:
+    """Check the database connection and PostGIS availability."""
+
+    connection = get_connection()
+    cursor = connection.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                current_database(),
+                PostGIS_Version();
+            """)
+
+        result = cursor.fetchone()
+
+        if result is None:
+            raise RuntimeError("The database health query returned no result.")
+
+        database_name, postgis_version = result
+
+        return {
+            "status": "healthy",
+            "database": database_name,
+            "postgis_version": postgis_version,
+        }
+
+    finally:
+        cursor.close()
+        connection.close()

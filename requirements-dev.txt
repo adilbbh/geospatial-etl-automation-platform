@@ -1,4 +1,4 @@
-﻿black
+black
 isort
 pytest
 httpx
