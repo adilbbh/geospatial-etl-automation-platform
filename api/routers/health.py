@@ -1,4 +1,4 @@
-﻿import psycopg2
+import psycopg2
 from fastapi import APIRouter, HTTPException, status
 
 from api.database import check_database_health

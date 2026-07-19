@@ -1,4 +1,4 @@
-﻿import time
+import time
 from pathlib import Path
 from uuid import uuid4
 
