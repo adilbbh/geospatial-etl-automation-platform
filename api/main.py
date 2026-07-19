@@ -1,9 +1,10 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from api.routers.health import router as health_router
 from api.routers.jobs import router as jobs_router
 from api.routers.roads import router as roads_router
 from api.routers.uploads import router as uploads_router
@@ -24,6 +25,7 @@ app.mount(
     name="static",
 )
 
+app.include_router(health_router)
 app.include_router(roads_router)
 app.include_router(uploads_router)
 app.include_router(jobs_router)
